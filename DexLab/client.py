@@ -1,14 +1,17 @@
 import hashlib
 import hmac
 import json
-import requests
 import urllib
 from urllib.parse import urlencode
+
+import requests
 
 from .constants import *
 from .helpers import *
 
 # The order API is still in preparation.
+
+
 class Client(object):
     def __init__(self, key, secret, subaccount=None, timeout=30):
         self._api_key = key
@@ -102,7 +105,8 @@ class Client(object):
         if len(market) < 15:
             return self._send_request('public', 'GET', f"orderbooks/{market}")
         else:
-            return self._send_request('public', 'GET', f"orderbooks/address/{market}")
+            return self._send_request(
+                'public', 'GET', f"orderbooks/address/{market}")
 
     def get_public_all_markets_price(self):
         """
@@ -151,7 +155,6 @@ class Client(object):
                 return info
         return f'[x] Error: the market {market} is not exist'
 
-
     def get_public_single_market_yesterday_price(self, market):
         """
         https://docs.dexlab.space/api-documentation/rest-api/price-api
@@ -160,7 +163,8 @@ class Client(object):
         :return: a dict contains the yesterday price of the market
         """
 
-        return self._send_request('public', 'GET', f"prices/{market.upper()}/closing-price")
+        return self._send_request(
+            'public', 'GET', f"prices/{market.upper()}/closing-price")
 
     def get_public_all_markets_volumes(self):
         """
@@ -194,7 +198,8 @@ class Client(object):
         :return: a dict contains the total volumes in USDT of market
         """
 
-        return self._send_request('public', 'GET', f"volumes/summary/total-trade-price")
+        return self._send_request(
+            'public', 'GET', f"volumes/summary/total-trade-price")
 
     def get_public_all_markets_trades(self):
         """
