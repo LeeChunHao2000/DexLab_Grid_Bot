@@ -64,7 +64,7 @@ class GridStrategy(object):
         orders = self.market.load_orders_for_owner(PublicKey(self.owner))
         orderTable = {}
         for o in orders:
-            orderTable[o.info.price] = o.client_id
+            orderTable[o.client_id] = o.info.price
         return orderTable
 
     def getLastPrice(self):
@@ -108,7 +108,7 @@ class GridStrategy(object):
 
     def cancelPending(self):
         orderTable = self.getOrders()
-        for o in orderTable.values():
+        for o in orderTable.keys():
             self.cancelOrder(o)
             
     def onExit(self):
@@ -124,4 +124,9 @@ class GridStrategy(object):
         """
         組合上面Func
         """
-        pass
+        
+        # firstBuy
+
+        while True:
+            orderTable = self.getOrders()
+            
