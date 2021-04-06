@@ -141,12 +141,14 @@ class GridStrategy(object):
         while True:
             orderTable = self.getOrders()
             lastPrcie = self.getLastPrice()
+            print (f'Current Price: {lastPrcie}\n')
+            print ('----place orders----')
             for i in range(self.grid):
                 if (i + 1) not in orderTable:
                     if (self.lower + i * distance) < lastPrcie:
                         #Buy(round((self.lower + i * distance), self.baseDecimal), i + 1)
-                        print ('Buy', i + 1, round((self.lower + i * distance), self.baseDecimal))
+                        print(f'Client ID: {i + 1}; Price {round((self.lower + i * distance), self.baseDecimal)}; Amount: {self.amount}; Open: BUY')
                     elif (self.lower + i * distance) > lastPrcie:
                         #Sell(round((self.lower + i * distance), self.quoteDecimal), i + 1)
-                        print ('Sell', i + 1, round((self.lower + i * distance), self.quoteDecimal))
+                        print(f'Client ID: {i + 1}; Price {round((self.lower + i * distance), self.quoteDecimal)}; Amount: {self.amount}; Open: SELL')
             time.sleep(self.interval)
