@@ -156,8 +156,9 @@ class GridStrategy(object):
 
     def griding(self):
         """
-        組合上面Func
+        Main Logic
         """
+        
         distance = (self.upper - self.lower) / self.grid
         order_table = self._get_orders()
         last_prcie = self._get_last_price()
