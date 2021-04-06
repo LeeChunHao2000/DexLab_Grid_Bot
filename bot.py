@@ -39,7 +39,10 @@ class GridStrategy(object):
         self.cc = conn('https://api.mainnet-beta.solana.com/')
         self.client = Client('', '')
         self.market = Market.load(self.cc, PublicKey(self.pair), program_id=PublicKey('9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin'))
-        self.openAcc = self.market.find_open_orders_accounts_for_owner(self.payer.public_key())[0].address
+        try:
+            self.openAcc = self.market.find_open_orders_accounts_for_owner(self.payer.public_key())[0].address
+        except:
+            self.openAcc = ''
         print (
             f'Initialize...\n\n'
             f'----parameters----\n\n'
@@ -72,7 +75,7 @@ class GridStrategy(object):
         :return: last price (float)
         """
 
-        return self.client.get_public_single_market_price(self.pair)['price']
+        return float(self.client.get_public_single_market_price(self.pair)['price'])
 
     def buyFunc(self, price, clientId):
         self.market.place_order(
@@ -104,6 +107,7 @@ class GridStrategy(object):
         """
         :return: a dict contains tx_hash and id
         """
+        self.openAcc = self.market.find_open_orders_accounts_for_owner(self.payer.public_key())[0].address
         return self.market.cancel_order_by_client_id(self.payer, PublicKey(self.openAcc), clientId, TxOpts(skip_preflight=True))
 
     def cancelPending(self):
@@ -127,6 +131,14 @@ class GridStrategy(object):
         
         # firstBuy
 
-        while True:
-            orderTable = self.getOrders()
-            
+        distance = (self.upper - self.lower) / self.grid
+
+        print (distance)
+        Buy = self.buyFunc
+        Sell = self.sellFunc
+        orderTable = self.getOrders()
+        lastPrcie = self.getLastPrice()
+        for i in range(self.grid):
+            if (i + 1) not in orderTable:
+                if (self.lower + i * distance) < lastPrcie:
+                    print ((self.lower + i * distance), lastPrcie)
