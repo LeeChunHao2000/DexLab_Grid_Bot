@@ -43,6 +43,8 @@ class GridStrategy(object):
             self.openAcc = self.market.find_open_orders_accounts_for_owner(self.payer.public_key())[0].address
         except:
             self.openAcc = ''
+        self.baseDecimal = self.market.state.base_spl_token_decimals()
+        self.quoteDecimal = self.market.state.quote_spl_token_decimals()
         print (
             f'Initialize...\n\n'
             f'----parameters----\n\n'
@@ -133,12 +135,18 @@ class GridStrategy(object):
 
         distance = (self.upper - self.lower) / self.grid
 
-        print (distance)
         Buy = self.buyFunc
         Sell = self.sellFunc
-        orderTable = self.getOrders()
-        lastPrcie = self.getLastPrice()
-        for i in range(self.grid):
-            if (i + 1) not in orderTable:
-                if (self.lower + i * distance) < lastPrcie:
-                    print ((self.lower + i * distance), lastPrcie)
+
+        while True:
+            orderTable = self.getOrders()
+            lastPrcie = self.getLastPrice()
+            for i in range(self.grid):
+                if (i + 1) not in orderTable:
+                    if (self.lower + i * distance) < lastPrcie:
+                        #Buy(round((self.lower + i * distance), self.baseDecimal), i + 1)
+                        print ('Buy', i + 1, round((self.lower + i * distance), self.baseDecimal))
+                    elif (self.lower + i * distance) > lastPrcie:
+                        #Sell(round((self.lower + i * distance), self.quoteDecimal), i + 1)
+                        print ('Sell', i + 1, round((self.lower + i * distance), self.quoteDecimal))
+            time.sleep(self.interval)
