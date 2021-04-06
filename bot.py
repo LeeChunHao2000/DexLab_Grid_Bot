@@ -111,7 +111,7 @@ class GridStrategy(object):
         for o in orderTable.values():
             self.cancelOrder(o)
             
-    def onexit(self):
+    def onExit(self):
         if True:
             print (
                 f'----Exit----\n\n'
