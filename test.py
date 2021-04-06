@@ -8,28 +8,33 @@ from solana.publickey import PublicKey
 from solana.rpc.types import TxOpts
 from spl.token.client import Token
 import base58
+import time
 
-private_key = base58.b58decode("私鑰")
+# private_key = base58.b58decode("私鑰")
 
-payer = Account(private_key[:32])
-cc = conn("https://api.mainnet-beta.solana.com/")
+# payer = Account(private_key[:32])
+# cc = conn("https://api.mainnet-beta.solana.com/")
 
-market_address = PublicKey("E14BKBhDWD4EuTkWj1ooZezesGxMW8LPCps4W5PuzZJo") # Address for market
-market = Market.load(cc, market_address)
+# market_address = PublicKey("E14BKBhDWD4EuTkWj1ooZezesGxMW8LPCps4W5PuzZJo") # Address for market
+# market = Market.load(cc, market_address)
 
-market = Market.load(cc, market_address, program_id=PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin"))
+# market = Market.load(cc, market_address, program_id=PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin"))
 
-tx_sig = market.place_order(
-    payer=PublicKey("38PvJgFjQ1rJdykymcG7pURko95sxyn5QvaDgop4qH1U"),
-    owner=payer,
-    side=Side.SELL,
-    order_type=OrderType.LIMIT,
-    limit_price=8,
-    max_quantity=1,
-    client_id=8,
-    opts = TxOpts(skip_preflight=True)
-)
-print(tx_sig)
+# tx_sig = market.place_order(
+#     payer=PublicKey("38PvJgFjQ1rJdykymcG7pURko95sxyn5QvaDgop4qH1U"),
+#     owner=payer,
+#     side=Side.SELL,
+#     order_type=OrderType.LIMIT,
+#     limit_price=8,
+#     max_quantity=1,
+#     client_id=8,
+#     opts = TxOpts(skip_preflight=True)
+# )
+# print(tx_sig)
+
+print (1)
+time.sleep(10)
+print (2)
 
 # orders = market.load_orders_for_owner(PublicKey('AQBqATwRqbU8odBL3RCFovzLbHR13MuoF2v53QpmjEV3'))
 

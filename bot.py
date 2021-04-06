@@ -8,14 +8,28 @@ from solana.publickey import PublicKey
 from solana.rpc.types import TxOpts
 from spl.token.client import Token
 from DexLab.client import Client
-import base58
+import base58, time
 
 class GridStrategy(object):
-    def __init__(self, upper, lower, amount, grid, pair, base, quote, owner, private):
+    def __init__(self, upper, lower, amount, grid, interval, pair, base, quote, owner, private):
+        """
+        :params upper: price up
+        :params lower: price down
+        :params amount: amount of the order
+        :params grid: amount of grid
+        :params interval: check interval
+        :params pair: dexlab trading pair address
+        :params base: youur base coin address for trading
+        :params quote: your quote coin address for trading
+        :params owner: your solana wallet address
+        :params private: your private key for pay the transaction gas
+        """
+
         self.upper = upper
         self.lower = lower
         self.amount = amount
         self.grid = grid
+        self.interval = interval
         self.pair = pair
         self.base = base
         self.quote = quote
@@ -43,6 +57,10 @@ class GridStrategy(object):
         )
 
     def getOrders(self):
+        """
+        :return: a dict contains price and client id Ex: {price: client}
+        """
+
         orders = self.market.load_orders_for_owner(PublicKey(self.owner))
         orderTable = {}
         for o in orders:
@@ -50,41 +68,42 @@ class GridStrategy(object):
         return orderTable
 
     def getLastPrice(self):
+        """
+        :return: last price (float)
+        """
+
         return self.client.get_public_single_market_price(self.pair)['price']
 
-    def buyFunc(self, price):
-        """
-        下買單
-        """
-        tx_sig = market.place_order(
-            payer=PublicKey(self.quote),
-            owner=payer,
-            side=Side.SELL,
+    def buyFunc(self, price, clientId):
+        self.market.place_order(
+            payer=PublicKey(self.base),
+            owner=self.payer,
+            side=Side.BUY,
             order_type=OrderType.LIMIT,
-            limit_price=10,
-            max_quantity=0.1,
-            client_id=1000 + 2,
+            limit_price=price,
+            max_quantity=self.amount,
+            client_id=clientId,
             opts = TxOpts(skip_preflight=True)
         )
-        print(tx_sig)
+        print(f'Client ID: {clientId}; Price {price}; Amount: {self.amount}; Open: BUY')
 
-    def sellFunc(self, price):
-        """
-        下賣單
-        """
-        tx_sig = market.place_order(
+    def sellFunc(self, price, clientId):
+        self.market.place_order(
             payer=PublicKey(self.quote),
-            owner=payer,
+            owner=self.payer,
             side=Side.SELL,
             order_type=OrderType.LIMIT,
-            limit_price=10,
-            max_quantity=0.1,
-            client_id=1000 + 2,
+            limit_price=price,
+            max_quantity=self.amount,
+            client_id=clientId,
             opts = TxOpts(skip_preflight=True)
         )
-        print(tx_sig)
+        print(f'Client ID: {clientId}; Price {price}; Amount: {self.amount}; Open: SELL')
 
     def cancelOrder(self, clientId):
+        """
+        :return: a dict contains tx_hash and id
+        """
         return self.market.cancel_order_by_client_id(self.payer, PublicKey(self.openAcc), clientId, TxOpts(skip_preflight=True))
 
     def cancelPending(self):
@@ -101,122 +120,8 @@ class GridStrategy(object):
             self.cancelPending()
         print ('----Success----')
 
-    def griding(self, orgAccount):
+    def griding(self):
         """
         組合上面Func
         """
-        account = _C(self.ex.GetAccount)
-        Log(account)
-        InitAccount = account
-        if IsVirtual() != True:
-            if IsCoinBase:
-                LogProfit(account.Stocks + account.FrozenStocks)
-            else:
-                LogProfit(account.Balance + account.FrozenBalance)
-        ticker = _C(self.ex.GetTicker)
-        amount = _N(AmountOnce)
-        FirstPrice = PriceDown
-        fishTable = {}
-        uuidTable = {}
-        needStocks = 0
-        actualNeedStocks = 0
-        notEnough = False
-        canNum = 0
-        BuyFirst = OpType == 0
-    
-        accountStocks = account.Stocks if IsCoinBase and IsFuture else account.Balance
-
-        currentPrice = ticker.Sell
-        for idx in range(AllNum):
-            price = _N(FirstPrice + (idx * PriceGrid) if BuyFirst else FirstPrice - (idx * PriceGrid))
-            price = min(currentPrice, price)
-            if IsFuture:
-                if IsCoinBase:
-                    needStocks += (100 * amount) / price / MarginLevel
-                else:
-                    needStocks += amount * price * MarginLevel / 100
-            else:
-                needStocks += amount * price
-            if (_N(needStocks) <= _N(accountStocks)):
-                actualNeedStocks = needStocks
-                canNum = canNum + 1
-            else:
-                notEnough = True
-            fishTable[idx] = self.STATE_WAIT_OPEN
-            uuidTable[idx] = -1
-
-        if notEnough and CheckMoney == True:
-            Log("帳戶餘額", accountStocks, ", 不足以支撐整個網格的運行，網格運行至少需要", needStocks)
-            return False
-        else:
-            Log("帳戶餘額", accountStocks, ", 網格運行需要占用資金", needStocks, "格子數", canNum)
-        
-        OpenFunc = self.buyFunc if BuyFirst else self.SellFunc
-        CoverFunc = self.SellFunc if BuyFirst else self.buyFunc
-        preMsg = ""
-        profitMax = 0
-        count = 0
-        while True:
-            if self.cs:
-                self.cs.runOnce()
-            
-            if count > 0 and count % 100 == 0:
-                count = 1
-                account = _C(self.ex.GetAccount)
-                if IsVirtual() != True:
-                    if IsCoinBase:
-                        LogProfit(account.Stocks + account.FrozenStocks)
-                    else:
-                        LogProfit(account.Balance + account.FrozenBalance)
-            msg = ""
-            records = _C(self.ex.GetRecords, PERIOD_M1)
-            length = len(records)
-            lowPrice = min(records[length - 1]['Low'], records[length - 2]['Low'])
-            highPrice = max(records[length - 1]['High'], records[length - 2]['High'])
-            orderRange = self.getOrderRange(lowPrice, highPrice, canNum)
-            # 初始化買入網格的时候是否全部買入上方的格子
-            if count == 0 and BuyUpGrid:
-                orderRange[1] = canNum - 1
-            
-            # 獲取未成交訂單
-            orders = _C(self.ex.GetOrders)
-            ticker = _C(self.ex.GetTicker)
-            for idx in range(orderRange[0], orderRange[1]):
-                openPrice = _N(FirstPrice + (idx * PriceGrid) if BuyFirst else FirstPrice - (idx * PriceGrid))
-                coverPrice = _N(openPrice + PriceGrid if BuyFirst else openPrice - PriceGrid)
-                openPrice = min(ticker.Sell, openPrice) if BuyFirst else max(ticker.Sell, openPrice)
-                state = fishTable[idx]
-                fishId = uuidTable[idx]
-                order = self.getOrder(orders, fishId)
-                if fishId != -1:
-                    if (not order):
-                        order = self.ex.GetOrder(fishId)
-                        if (not order):
-                            Log("獲取訂單訊息失敗, ID: ", fishId)
-                            continue
-                    if (order.Status == ORDER_STATE_PENDING):
-                        continue
-
-                # 訂單成交，掛賣單。走到這裡說明委託單都已經成交了
-                if state == self.STATE_WAIT_COVER:
-                    if IsFuture:
-                        self.ex.SetDirection("closebuy" if BuyFirst else "closesell")
-                    coverId = CoverFunc(coverPrice, amount)
-                    #Log("賣出的格子是", idx, "開倉價格", openPrice, "目標價格", coverPrice) 
-                    if coverId:
-                        fishTable[idx] = self.STATE_WAIT_CLOSE
-                        uuidTable[idx] = coverId
-                elif state == self.STATE_WAIT_OPEN or state == self.STATE_WAIT_CLOSE:
-                    if IsFuture:
-                        self.ex.SetDirection("buy" if BuyFirst else "sell")
-                    openId = OpenFunc(openPrice, amount)
-                    Sleep(200)
-                    if openId:
-                        fishTable[idx] = self.STATE_WAIT_COVER
-                        uuidTable[idx] = openId
-                        #Log("掛單的格子是", idx, "開倉價格", openPrice, "目標價格", coverPrice, "訂單號", openId) 
-                        if state == self.STATE_WAIT_CLOSE:
-                            self.ProfitCount += 1
-            Sleep(CheckInterval)
-            count += 1
-        return True
+        pass
