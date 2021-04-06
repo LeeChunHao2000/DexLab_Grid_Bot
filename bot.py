@@ -1,11 +1,9 @@
 import time
 
 import base58
-from nacl import public
 from pyserum.connection import conn
 from pyserum.enums import OrderType, Side
 from pyserum.market import Market
-from pyserum.open_orders_account import *
 from solana.account import Account
 from solana.publickey import PublicKey
 from solana.rpc.types import TxOpts
@@ -42,6 +40,7 @@ class GridStrategy(object):
         self.owner = owner
         self.key = base58.b58decode(private)
         self.payer = Account(self.key[:32])
+        self.client = Client('', '')
         self.cc = conn('https://api.mainnet-beta.solana.com/')
         self.market = Market.load(
             self.cc, PublicKey(self.pair),
@@ -170,12 +169,12 @@ class GridStrategy(object):
 # Worker Example
 # it can be replaced by other worker services
 
-a = GridStrategy(
+strategy = GridStrategy(
     3, 1, 10, 10, 'E14BKBhDWD4EuTkWj1ooZezesGxMW8LPCps4W5PuzZJo',
     'E14BKBhDWD4EuTkWj1ooZezesGxMW8LPCps4W5PuzZJo',
     'E14BKBhDWD4EuTkWj1ooZezesGxMW8LPCps4W5PuzZJo',
     'E14BKBhDWD4EuTkWj1ooZezesGxMW8LPCps4W5PuzZJo',
     '')
 while True:
-    a.griding()
-    sleep(60)
+    strategy.griding()
+    time.sleep(60)
