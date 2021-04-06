@@ -52,6 +52,8 @@ class GridStrategy(object):
             f'lower: {self.lower}\n'
             f'amount: {self.amount}\n'
             f'grid: {self.grid}\n'
+            f'base decimal: {self.baseDecimal}\n'
+            f'quote decimal: {self.quoteDecimal}\n'
             f'pair: {self.pair}\n'
             f'base: {self.base}\n'
             f'quote: {self.quote}\n'
