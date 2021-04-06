@@ -81,7 +81,7 @@ class GridStrategy(object):
             side=Side.BUY,
             order_type=OrderType.LIMIT,
             limit_price=price,
-            max_quantity=self.amount,
+            max_quantity=abs(self.amount),
             client_id=clientId,
             opts = TxOpts(skip_preflight=True)
         )
@@ -94,7 +94,7 @@ class GridStrategy(object):
             side=Side.SELL,
             order_type=OrderType.LIMIT,
             limit_price=price,
-            max_quantity=self.amount,
+            max_quantity=abs(self.amount),
             client_id=clientId,
             opts = TxOpts(skip_preflight=True)
         )
