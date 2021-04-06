@@ -12,7 +12,6 @@ import base58
 
 class GridStrategy(object):
     def __init__(self, upper, lower, amount, grid, pair, base, quote, owner, private):
-        print ("Initialize...")
         self.upper = upper
         self.lower = lower
         self.amount = amount
@@ -21,25 +20,39 @@ class GridStrategy(object):
         self.base = base
         self.quote = quote
         self.owner = owner
-        self.key = base58.b58decode(self.private)
-        self.payer = Account(key[:32])
-        self.cc = conn("https://api.mainnet-beta.solana.com/")
+        self.key = base58.b58decode(private)
+        self.payer = Account(self.key[:32])
+        self.cc = conn('https://api.mainnet-beta.solana.com/')
         self.client = Client('', '')
-        self.market = Market.load(self.cc, PublicKey(self.pair), program_id=PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin"))
+        self.market = Market.load(self.cc, PublicKey(self.pair), program_id=PublicKey('9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin'))
+        self.openAcc = self.market.find_open_orders_accounts_for_owner(self.payer.public_key())[0].address
+        print (
+            f'Initialize...\n\n'
+            f'----parameters----\n\n'
+            f'upper: {self.upper}\n'
+            f'lower: {self.lower}\n'
+            f'amount: {self.amount}\n'
+            f'grid: {self.grid}\n'
+            f'pair: {self.pair}\n'
+            f'base: {self.base}\n'
+            f'quote: {self.quote}\n'
+            f'owner: {self.owner}\n'
+            f'open orders account: {self.openAcc}\n'
+            f'key: {self.key[:32]}\n\n'
+            f'----start----\n'
+        )
 
-    def getOrder(self):
-        """
-        把orders整理成dict, index為price, value為orderid
-        """
-        orders = market.load_orders_for_owner(PublicKey(self.owner))
-        for order in orders:
-            print("Order id: %d, Client id: %d, Size: %f, Price: %f, Side: %s." % (
-                order.order_id, order.client_id, order.info.size, order.info.price, order.side))
+    def getOrders(self):
+        orders = self.market.load_orders_for_owner(PublicKey(self.owner))
+        orderTable = {}
+        for o in orders:
+            orderTable[o.info.price] = o.client_id
+        return orderTable
 
     def getLastPrice(self):
         return self.client.get_public_single_market_price(self.pair)['price']
 
-    def buyFunc(self, price)
+    def buyFunc(self, price):
         """
         下買單
         """
@@ -55,7 +68,7 @@ class GridStrategy(object):
         )
         print(tx_sig)
 
-    def sellFunc(self, price)
+    def sellFunc(self, price):
         """
         下賣單
         """
@@ -71,31 +84,22 @@ class GridStrategy(object):
         )
         print(tx_sig)
 
-    def cancelPending(self):
-        """
-        取消所有掛單
-        """
-        ret = False
-        while True:
-            if ret:
-                Sleep(Interval)
-            orders = _C(self.ex.GetOrders)
-            if len(orders) == 0:
-                break
-            for o in orders:
-                self.ex.CancelOrder(o.Id, o)
-            ret = True
-        return ret
+    def cancelOrder(self, clientId):
+        return self.market.cancel_order_by_client_id(self.payer, PublicKey(self.openAcc), clientId, TxOpts(skip_preflight=True))
 
-    def onexit():
-        """
-        執行取消所有掛單
-        """
-        if CancelAllWS:
-            Log("正在退出, 嚐試取消所有掛單")
+    def cancelPending(self):
+        orderTable = self.getOrders()
+        for o in orderTable.values():
+            self.cancelOrder(o)
+            
+    def onexit(self):
+        if True:
+            print (
+                f'----Exit----\n\n'
+                f'Closing all open orders...\n'
+            )
             self.cancelPending()
-        Log("策略成功停止")
-        Log(_C(self.ex.GetAccount))
+        print ('----Success----')
 
     def griding(self, orgAccount):
         """
@@ -216,7 +220,3 @@ class GridStrategy(object):
             Sleep(CheckInterval)
             count += 1
         return True
-        
-def main():
-    Grid = GridStrategy(0, 100, 100, 'E14BKBhDWD4EuTkWj1ooZezesGxMW8LPCps4W5PuzZJo', '9SJPYhxEx5w7Xqg8G1nkhnr1hVWrnon7ptCaxkG95s3K', '38PvJgFjQ1rJdykymcG7pURko95sxyn5QvaDgop4qH1U', 'AQBqATwRqbU8odBL3RCFovzLbHR13MuoF2v53QpmjEV3')
-    print (Grid.getLastPrice())
