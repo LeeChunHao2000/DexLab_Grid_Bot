@@ -22,7 +22,6 @@ class GridStrategy(object):
         :params lower: price down
         :params amount: amount of the order
         :params grid: amount of grid
-        :params interval: check interval
         :params pair: dexlab trading pair address
         :params base: youur base coin address for trading
         :params quote: your quote coin address for trading
